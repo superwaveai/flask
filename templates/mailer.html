@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Superwave Artillery</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <link href='https://fonts.googleapis.com/css?family=Inter' rel='stylesheet'>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        #output_log, #csv_content_table {
+        	border: 1px solid #1d1d1d;
+            height: 300px;
+            overflow: auto;
+            font-family: 'Consolas', monospace;
+            size: 12px;
+        }
+        .html-render {
+            border: 1px solid #1d1d1d;
+            border-radius: .25rem;
+            padding: .375rem .75rem;
+            overflow: auto;
+            height: 300px;
+        }
+		footer {
+			background-color: #047BFF;
+			color: white;
+			padding: 2rem 0; /* Adjust the padding to match your style */
+			margin-top: 4rem; /* Adds space between the content and the footer */
+		}
+
+		.container, footer {
+			padding-left: 15px;
+			padding-right: 15px;
+		}
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4"><b>Superwave Artillery</b></h1>
+        <form id="email_form" onsubmit="submitForm(event);" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="sender_address">Sender Address</label>
+                <input type="email" id="sender_address" name="sender_address" class="form-control" placeholder="Enter your sender MailFrom address" oninput="localStorage.setItem('sender_address', this.value);" required> 
+            </div>
+            <div class="form-group">
+                <label for="subject_template">Subject Template</label>
+                <input type="text" id="subject_template" name="subject_template" class="form-control" placeholder="Enter the subject line template (use {Name} and {Company} as placeholders)" oninput="localStorage.setItem('subject_template', this.value);" required> 
+            </div>
+            <div class="form-group">
+                <label for="html_file">HTML File Upload</label>
+                <input type="file" id="html_file" name="html_content" class="form-control-file" required>
+            </div>
+            <div class="form-group">
+                <label for="csv_file">CSV File Upload</label>
+                <input type="file" id="csv_file" name="csv_file" class="form-control-file" required>
+            </div>
+            <div class="form-group">
+                <label for="reply_address">Reply-to Address</label>
+                <input type="email" id="reply_address" name="reply_to_address" class="form-control" placeholder="Enter the replyTo address" oninput="localStorage.setItem('reply_address', this.value);" required> 
+            </div>
+            <div class="form-group">
+                <label for="num_threads">Number of Threads</label>
+                <input type="number" id="num_threads" name="num_threads" class="form-control" min="1" placeholder="Enter the number of threads to use for sending emails" oninput="localStorage.setItem('num_threads', this.value);" required>
+            </div>
+            <div class="form-group">
+                <label for="connection_string">Endpoint String</label>
+                <input type="text" id="connection_string" name="connection_string" class="form-control" placeholder="Enter your connection string" oninput="localStorage.setItem('connection_string', this.value);" required> 
+            </div>
+			<div class="row">
+				<div class="col-6">
+					<button type="submit" class="btn btn-primary btn-block">Submit</button>
+				</div>
+				<div class="col-6">
+					<button type="button" id="clearForm" class="btn btn-secondary btn-block">Clear Form</button>
+				</div>
+			</div>
+        </form>
+
+        <h2 class="mt-5"><b>Output Log</b></h2>
+        <textarea id="output_log" class="form-control" readonly>{{ output_log }}</textarea>
+        
+        <h2 class="mt-5"><b>HTML File Content</b></h2>
+        <div id="html_content" class="html-render"></div>
+        
+        <h2 class="mt-5"><b>CSV File Content</b></h2>
+        <div id="csv_content_table" class="form-control"></div>
+    </div>
+    <script>
+        // Assign previously stored values, if any, to each input
+        document.getElementById('sender_address').value = localStorage.getItem('sender_address') || '';
+        document.getElementById('subject_template').value = localStorage.getItem('subject_template') || '';
+        document.getElementById('reply_address').value = localStorage.getItem('reply_address') || '';
+        document.getElementById('num_threads').value = localStorage.getItem('num_threads') || '';
+        document.getElementById('connection_string').value = localStorage.getItem('connection_string') || '';
+
+        // Display file contents with JavaScript
+        document.getElementById('html_file').addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if(!file) return;
+
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('html_content').innerHTML = e.target.result;
+            }
+            reader.readAsText(file);
+        });
+
+        document.getElementById('csv_file').addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if(!file) return;
+
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('csv_content_table').innerHTML = '';
+                document.getElementById('csv_content_table').appendChild(csvToTable(e.target.result));
+            }
+            reader.readAsText(file);
+        });
+
+        // Display CSV as table
+		function csvToTable(csv) {
+			var lines = csv.trim().split("\n");
+			var result = [];
+			var headers = lines[0].split(",");
+
+			for (var i = 1; i < lines.length; i++) {
+				var obj = {};
+				var currentline = lines[i].split(",");
+		
+				// Skip empty lines
+				if (currentline.length === 1 && currentline[0].trim() === '') continue;
+
+				for (var j = 0; j < headers.length; j++) {
+					obj[headers[j]] = j < currentline.length ? currentline[j] : '';
+				}
+				result.push(obj);
+			}
+
+			var table = document.createElement("table");
+			table.className = "table table-striped"; // Apply Bootstrap class for formatting
+			var thead = table.createTHead();
+			var row = thead.insertRow(-1);
+
+			// Add a header for the counter column
+			var headerCell = document.createElement("th");
+			headerCell.textContent = '#'; // Column header for counters
+			row.appendChild(headerCell);
+
+			for (var i = 0; i < headers.length; i++) {
+				headerCell = document.createElement("th");
+				headerCell.textContent = headers[i];
+				row.appendChild(headerCell);
+			}
+
+			var tbody = table.createTBody();
+			for (var i = 0; i < result.length; i++) {
+				row = tbody.insertRow(-1);
+
+				// Add a cell at the beginning of the row for the counter
+				var cell = row.insertCell(-1);
+				cell.textContent = i + 1; // Counter starts at 1
+
+				for (var j = 0; j < headers.length; j++) {
+					cell = row.insertCell(-1);
+					cell.textContent = result[i][headers[j]];
+				}
+			}
+
+			return table;
+		}
+
+        // Clear form and all saved values
+        document.getElementById('clearForm').addEventListener('click', function() {
+            // Clear the form
+            document.getElementById('email_form').reset();
+            // Clear the stored values
+            localStorage.clear();
+            // Clear file content boxes
+            document.getElementById('html_content').innerHTML = '';
+            document.getElementById('csv_content_table').innerHTML = '';
+        });
+        
+		// Perseverance of the Saints (Input)
+		document.addEventListener('DOMContentLoaded', function() {
+			// Load saved data from localStorage
+			document.getElementById('sender_address').value = localStorage.getItem('sender_address') || '';
+			document.getElementById('subject_template').value = localStorage.getItem('subject_template') || '';
+			document.getElementById('reply_address').value = localStorage.getItem('reply_address') || '';
+			document.getElementById('num_threads').value = localStorage.getItem('num_threads') || '';
+			document.getElementById('connection_string').value = localStorage.getItem('connection_string') || '';
+
+			// Save data to localStorage on input change
+			document.getElementById('email_form').addEventListener('input', function() {
+				localStorage.setItem('sender_address', document.getElementById('sender_address').value);
+				localStorage.setItem('subject_template', document.getElementById('subject_template').value);
+				localStorage.setItem('reply_address', document.getElementById('reply_address').value);
+				localStorage.setItem('num_threads', document.getElementById('num_threads').value);
+				localStorage.setItem('connection_string', document.getElementById('connection_string').value);
+			});
+		});
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js"></script>
+    <script>
+        function submitForm(event) {
+            event.preventDefault(); // Prevent the default form submission behavior
+    
+            // Your existing form data retrieval code here
+    
+            // Create a FormData object to store form data
+            var formData = new FormData(document.getElementById('email_form'));
+    
+            // Use the fetch API to send an asynchronous POST request
+            fetch('/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle the response data as needed
+                console.log('Response:', data);
+            })
+            .catch(error => {
+                // Handle errors
+                console.error('Error:', error);
+            });
+        }
+    </script>
+    
+    <script>
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+    
+        socket.on('update_logs', function(data) {
+            // Update the logs textarea with the received logs
+            document.getElementById('output_log').value = data.logs.join('\n');
+        });
+    </script>
+<footer>
+    <div class="container">
+        <p><b>2023 (c) - Superwave, all rights reserved</b></p>
+    </div>
+</footer>
+</body>
+</html>
