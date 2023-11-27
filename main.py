@@ -12,7 +12,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 socketio = SocketIO(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/artillery'  
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:Ea-2bB-B3CA51efe26a2aE5FGFeF3FDF@roundhouse.proxy.rlwy.net/railway'  
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
