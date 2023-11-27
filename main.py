@@ -12,7 +12,7 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
-socketio = SocketIO(app)
+socketio = SocketIO(app,manage_session=False)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:Ea-2bB-B3CA51efe26a2aE5FGFeF3FDF@roundhouse.proxy.rlwy.net:39541/railway'  
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
