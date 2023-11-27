@@ -228,7 +228,7 @@
     </script>
     
     <script>
-        var socket = io.connect('https://' + document.domain + ':' + location.port);
+        var socket = io.connect('https://flask-production-c2e1.up.railway.app');
     
         socket.on('update_logs', function(data) {
             // Update the logs textarea with the received logs
