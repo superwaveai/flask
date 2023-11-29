@@ -1,1 +1,1 @@
- uwsgi --http :$PORT --wsgi-file main.py --callable app --enable-threads
+web: uwsgi --ini uwsgi.ini
