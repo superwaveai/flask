@@ -1,22 +1,18 @@
-# Use an official Python runtime as a parent image
+# Use a lightweight base image
 FROM python:3.8-slim
 
 # Set the working directory in the container
 WORKDIR /usr/src/app
 
-# Install necessary system dependencies
+# Install system dependencies
 RUN apt-get update && \
-    apt-get install -y build-essential libcrypt-dev && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y build-essential libpcre3 libpcre3-dev
 
-# Copy the application files into the container at /usr/src/app
+# Copy the application files into the container
 COPY . .
 
-# Install any needed packages specified in requirements.txt
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose the port uWSGI will run on
+# Expose the port that uWSGI will run on
 EXPOSE 5000
-
-# Command to run your application using uWSGI
-CMD ["uwsgi", "--https", ":5000", "--wsgi-file", "main.py", "--callable", "app", "--master", "--processes", "4", "--threads", "2", "--stats", "0.0.0.0:9191"]
