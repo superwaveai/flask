@@ -19,4 +19,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 5000
 
 # Command to run your application using uWSGI
-CMD ["uwsgi", "--http", ":5000", "--wsgi-file", "main.py", "--callable", "app", "--master", "--processes", "4", "--threads", "2", "--stats", "0.0.0.0:9191"]
+CMD ["uwsgi", "--https", ":5000", "--wsgi-file", "main.py", "--callable", "app", "--master", "--processes", "4", "--threads", "2", "--stats", "0.0.0.0:9191"]
