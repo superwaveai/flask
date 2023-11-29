@@ -11,3 +11,5 @@ flask_sqlalchemy==3.1.1
 mysql_connector_python
 flask_cors
 gevent
+wheel
+uvicorn
